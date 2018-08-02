@@ -36,7 +36,7 @@ typedef Entry = {
 	/**
 	 * Entries added during this revision
 	 */
-	@:keep public var entries:Array<Dynamic>;
+	@:keep public var entries:Array<Entry>;
 
 	/**
 	 *  Whether we should respond to graph change notifications or not
@@ -46,6 +46,53 @@ typedef Entry = {
 	@:keep private var store:MemoryJournalStore;
 
 	@:keep private var currentRevision:Int;
+
+
+	private static function calculateMeta(oldMeta:Dynamic, newMeta:Dynamic):Dynamic
+	{
+		var setMeta = {};
+		for(k in Reflect.fields(oldMeta)){
+			Reflect.setField(setMeta, k, null);
+		}
+
+		for(k in Reflect.fields(newMeta)){
+			var v = Reflect.field(newMeta, k);
+			Reflect.setField(setMeta, k, v);
+		}
+
+		return setMeta;	
+	}
+
+	private static function entryToPrettyString(entry:Entry){
+		var a = entry.args;
+		switch entry.cmd {
+			case 'addNode' : return '${a.id}(${a.component})';
+			case 'removeNode' : return 'DEL ${a.id}(${a.component})';
+			case 'renameNode' : return 'RENAME ${a.oldId} ${a.newId}';
+			case 'changeNode' : return 'META ${a.id}';
+			case 'addEdge' : return '${a.from.node} ${a.from.port} -> ${a.to.port} ${a.to.node}';
+			case 'removeEdge' : return '${a.from.node} ${a.from.port} -X> ${a.to.port} ${a.to.node}';
+			case 'changeEdge' : return 'META ${a.from.node} ${a.from.port} -> ${a.to.port} ${a.to.node}';
+			case 'addInitial' : return ''${a.from.data}' -> ${a.to.port} ${a.to.node}';
+			case 'removeInitial' : return '"${a.from.data}" -X> ${a.to.port} ${a.to.node}';
+			case 'startTransaction' : return '>>> ${entry.rev}: ${a.id}';
+			case 'endTransaction' : return '<<< ${entry.rev}: ${a.id}';
+			case 'changeProperties' : return 'PROPERTIES';
+			case 'addGroup' : return 'GROUP ${a.name}';
+			case 'renameGroup' : return 'RENAME GROUP ${a.oldName} ${a.newName}';
+			case 'removeGroup' : return 'DEL GROUP ${a.name}';
+			case 'changeGroup' : return 'META GROUP ${a.name}';
+			case 'addInport' : return 'INPORT ${a.name}';
+			case 'removeInport' : return 'DEL INPORT ${a.name}';
+			case 'renameInport' : return 'RENAME INPORT ${a.oldId} ${a.newId}';
+			case 'changeInport' : return 'META INPORT ${a.name}';
+			case 'addOutport' : return 'OUTPORT ${a.name}';
+			case 'removeOutport' : return 'DEL OUTPORT ${a.name}';
+			case 'renameOutport' : return 'RENAME OUTPORT ${a.oldId} ${a.newId}';
+			case 'changeOutport' : return 'META OUTPORT ${a.name}';
+			default: throw 'Unknown journal entry: ${entry.cmd}';
+		}
+	}
 
 
 	public function new(graph:Graph, metadata:Dynamic, ?store:MemoryJournalStore) {
@@ -264,7 +311,7 @@ typedef Entry = {
 		}
 
 		if(this.entries.length > 0){
-			throw "Inconsistent entries";
+			throw 'Inconsistent entries';
 		}
 
 		currentRevision++;
@@ -311,7 +358,7 @@ typedef Entry = {
 			case 'addNode': this.graph.addNode(a.id, a.component);
 			case 'removeNode': this.graph.removeNode(a.id);
 			case 'renameNode': this.graph.renameNode(a.oldId, a.newId);
-			case 'changeNode': this.graph.setNodeMetadata(a.id, a._new);
+			case 'changeNode': this.graph.setNodeMetadata(a.id, calculateMeta(a._old, a._new));
 			case 'addEdge': this.graph.addEdge(a.from.node, a.from.port, a.to.node, a.to.port);
 			case 'removeEdge': this.graph.removeEdge(a.from.node, a.from.port, a.to.node, a.to.port);
 			case 'changeEdge': this.graph.setEdgeMetadata(a.from.node, a.from.port, a.to.node, a.to.port, calculateMeta(a._old, a._new));
@@ -328,11 +375,178 @@ typedef Entry = {
 			case 'removeInport' : this.graph.removeInport(a.name);
 			case 'renameInport' : this.graph.renameInport(a.oldId, a.newId);
 			case 'changeInport' : this.graph.setInportMetadata(a.name, calculateMeta(a._old, a._new));
-			case 'addOutport' : this.graph.addOutport(a.name, a.port.process, a.port.port, a.port.metadata a.name);
+			case 'addOutport' : this.graph.addOutport(a.name, a.port.process, a.port.port, a.port.metadata);
 			case 'removeOutport' : this.graph.removeOutport(a.name);
 			case 'renameOutport' : this.graph.renameOutport(a.oldId, a.newId);
 			case 'changeOutport' : this.graph.setOutportMetadata(a.name, calculateMeta(a._old, a._new));
 			default: throw 'Unknown journal entry: ${entry.cmd}';										
 		}
 	}
+
+
+	@:keep public function executeEntryInversed(entry:Entry):Void {
+		var a:Dynamic = entry.args;
+
+		switch entry.cmd {
+			case 'addNode': this.graph.removeNode(a.id);
+			case 'removeNode': this.graph.addNode(a.id, a.component);
+			case 'renameNode': this.graph.renameNode(a.newId, a.oldId);
+			case 'changeNode': this.graph.setNodeMetadata(a.id, calculateMeta(a._new, a._old));
+			case 'addEdge': this.graph.removeEdge(a.from.node, a.from.port, a.to.node, a.to.port);
+			case 'removeEdge': this.graph.addEdge(a.from.node, a.from.port, a.to.node, a.to.port);
+			case 'changeEdge': this.graph.setEdgeMetadata(a.from.node, a.from.port, a.to.node, a.to.port, calculateMeta(a._new, a._old));
+			case 'addInitial': this.graph.removeInitial(a.to.node, a.to.port);
+			case 'removeInitial': this.graph.addInitial(a.from.data, a.to.node, a.to.port);
+			case 'startTransaction': return;
+			case 'endTransaction': return;
+			case 'changeProperties' : this.graph.setProperties(a._old);
+			case 'addGroup' : this.graph.removeGroup(a.name);
+			case 'renameGroup' : this.graph.renameGroup(a.newName, a.oldName);
+			case 'removeGroup' : this.graph.addGroup(a.name, a.nodes, a.metadata);
+			case 'changeGroup' : this.graph.setGroupMetadata(a.name, calculateMeta(a._new, a._old));
+			case 'addInport' : this.graph.removeInport(a.name);
+			case 'removeInport' : this.graph.addInport(a.name, a.port.process, a.port.port, a.port.metadata);
+			case 'renameInport' : this.graph.renameInport(a.newId, a.oldId);
+			case 'changeInport' : this.graph.setInportMetadata(a.name, calculateMeta(a._new, a._old));
+			case 'addOutport' : this.graph.removeOutport(a.name);
+			case 'removeOutport' : this.graph.addOutport(a.name, a.port.process, a.port.port, a.port.metadata);
+			case 'renameOutport' : this.graph.renameOutport(a.newId, a.oldId);
+			case 'changeOutport' : this.graph.setOutportMetadata(a.name, calculateMeta(a._new, a._old));
+			default: throw 'Unknown journal entry: ${entry.cmd}';										
+		}
+	}
+
+
+	@:keep public function moveToRevision(revId:Int){
+			if(revId == currentRevision){
+				return;
+			}
+
+			subscribed = false;
+
+			if(revId > currentRevision){
+				// Forward replay journal to revId
+				for(r in (currentRevision+1)...revId){
+					for(entry in store.fetchTransaction(r)){
+						executeEntry(entry);
+					}
+				}
+			} else {
+				// Move backwards, and apply inverse changes
+				var j, i;
+				j = currentRevision;
+				while (j > (revId+1)) {
+					entries = store.fetchTransaction(j);
+					i = entries.length-1;
+					while (i > 0) {
+						executeEntryInversed(entries[i]);
+						i += -1;
+					}
+					j += -1;
+				}
+			}
+
+			currentRevision = revId;
+			subscribed = true;
+	}
+
+		// Undoing & redoing
+
+		/**
+		 * Undo the last graph change
+		 */
+		@:keep public function undo() {
+			if(!canUndo()){
+				return;
+			}
+			moveToRevision(currentRevision-1);
+		}
+
+		/**
+		 * Redo the last undo
+		 */
+		@:keep public function redo() {
+			if(!canRedo()){
+				return;
+			}
+			moveToRevision(currentRevision+1);
+		}
+
+		/**
+		 * If there is something to undo
+		 * @return Bool
+		 */
+		public function canUndo():Bool {
+			return currentRevision > 0;
+		}
+
+		/**
+		 * If there is something to redo
+		 * @return Bool
+		 */
+		public function canRedo():Bool {
+			return currentRevision < store.lastRevision;
+		}
+
+
+
+	// Serializing
+
+
+	/**
+	 * Render a pretty printed string of the journal. Changes are abbreviated
+	 * @param startRev 
+	 * @param endRev 
+	 */
+	public function toPrettyString(?startRev:Int, ?endRev:Int) {
+		startRev |= 0;
+		endRev |= store.lastRevision;
+		var lines:Array<String> = [];
+
+		for(r in startRev...endRev) {
+			var e = store.fetchTransaction(r);
+
+			for(entry in e){
+				lines.push(entryToPrettyString(entry));
+			}
+		}
+
+		return lines.join('\n');
+	}
+
+	/**
+	 * Serialize journal to JSON
+	 * @param startRev 
+	 * @param endRev 
+	 */
+	public function toJSON(?startRev:Int, ?endRev:Int) {
+		startRev |= 0;
+		endRev |= store.lastRevision;
+		var entries:Array<String> = [];
+		var r = startRev;
+		while(r < endRev) {
+			var e = store.fetchTransaction(r);
+
+			for(entry in e){
+				entries.push(entryToPrettyString(entry));
+			}
+
+			r += 1;
+		}
+
+		return entries;
+	}
+
+	#if !js
+	public function save(file:String, success:String->Void) {
+		var json = haxe.Json.stringify(toJSON(), null, '\t');
+		try{
+			sys.io.File.saveContent('${file}.json', json);
+			success(file);
+		} catch(e:Dynamic) {
+			throw e;
+		}
+	}
+	#end
+
 }

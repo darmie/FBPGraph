@@ -186,7 +186,7 @@ typedef Group =
 
 		this.transaction.id = id;
 		this.transaction.depth = 1;
-		this.emit('startTransaction', [id, metadata]);
+		this.emit('startTransaction', [id, metadata != null ? metadata : {}]);
 	}
 
 	@:keep public function endTransaction(id:String, ?metadata:Dynamic):Void
@@ -198,7 +198,7 @@ typedef Group =
 
 		this.transaction.id = null;
 		this.transaction.depth = 0;
-		this.emit('endTransaction', [id, metadata]);
+		this.emit('endTransaction', [id, metadata != null ? metadata : {}]);
 	}
 
 	@:keep public function checkTransactionStart():Void
@@ -242,7 +242,7 @@ typedef Group =
 		this.checkTransactionEnd();
 	}
 
-	@:keep public function addInport(publicPort:String, nodeKey:String, portKey:String, metadata:Dynamic):Void
+	@:keep public function addInport(publicPort:String, nodeKey:String, portKey:String, ?metadata:Dynamic):Void
 	{
 		// Check that node exists
 
@@ -258,7 +258,7 @@ typedef Group =
 		Reflect.setField(this.inports, publicPort, {
 			process: nodeKey,
 			port: this.getPortName(portKey),
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		});
 
 		this.emit('addInport', [publicPort, Reflect.field(this.inports, publicPort));
@@ -312,8 +312,10 @@ typedef Group =
 		checkTransactionEnd();
 	}
 
-	@:keep public function setInportMetadata(publicPort:String, metadata:Dynamic):Void
+	@:keep public function setInportMetadata(publicPort:String, ?metadata:Dynamic):Void
 	{
+		metadata = metadata != null ? metadata : {};
+
 		publicPort = getPortName(publicPort);
 
 		if (Reflect.field(inports, publicPort) == null)
@@ -349,7 +351,7 @@ typedef Group =
 		checkTransactionEnd();
 	}
 
-	@:keep public function addOutport(publicPort:String, nodeKey:String, portKey:String, metadata:Dynamic):Void
+	@:keep public function addOutport(publicPort:String, nodeKey:String, portKey:String, ?metadata:Dynamic):Void
 	{
 		// Check that node exists
 
@@ -365,7 +367,7 @@ typedef Group =
 		Reflect.setField(this.outports, publicPort, {
 			process: nodeKey,
 			port: this.getPortName(portKey),
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		});
 
 		this.emit('addOutport', [publicPort, Reflect.field(this.outports, publicPort));
@@ -419,8 +421,11 @@ typedef Group =
 		checkTransactionEnd();
 	}
 
-	@:keep public function setOutportMetadata(publicPort:String, metadata:Dynamic):Void
+	@:keep public function setOutportMetadata(publicPort:String, ?metadata:Dynamic):Void
 	{
+
+		metadata = metadata != null ? metadata : {};
+
 		publicPort = getPortName(publicPort);
 
 		if (Reflect.field(outports, publicPort) == null)
@@ -462,14 +467,14 @@ typedef Group =
 	 * @param	nodes
 	 * @param	metadata
 	 */
-	@:keep public function addGroup(group:String, nodes:Array<String>, metadata:Dynamic):Void
+	@:keep public function addGroup(group:String, nodes:Array<String>, ?metadata:Dynamic):Void
 	{
 		this.checkTransactionStart();
 
 		var g:Group = {
 			name: group,
 			nodes: nodes,
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		};
 
 		groups.push(g);
@@ -528,8 +533,9 @@ typedef Group =
 		checkTransactionEnd();
 	}
 
-	@:keep public function setGroupMetadata(groupName:String, metadata:Dynamic):Void
+	@:keep public function setGroupMetadata(groupName:String, ?metadata:Dynamic):Void
 	{
+		metadata = metadata != null ? metadata : {};
 		checkTransactionStart();
 		for (i in 0...groups.length)
 		{
@@ -849,7 +855,7 @@ typedef Group =
 	/**
 	 * Adding an edge will emit the `addEdge` event.
 	 */
-	@:keep public function addEdgeIndex(outNode:String, outPort:String, outIndex:Int, inNode:String, inPort:String, inIndex:Int, metadata:Dynamic):Edge
+	@:keep public function addEdgeIndex(outNode:String, outPort:String, outIndex:Int, inNode:String, inPort:String, inIndex:Int, ?metadata:Dynamic):Edge
 	{
 		if (getNode(outNode) == null)
 		{
@@ -876,7 +882,7 @@ typedef Group =
 				port:outPort,
 				index:inIndex
 			},
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		};
 
 		edges.push(edge);
@@ -897,7 +903,7 @@ typedef Group =
 	 *
 	 * Adding an edge will emit the `addEdge` event.
 	 */
-	@:keep public function addEdge(outNode:String, outPort:String, inNode:String, inPort:String, metadata:Dynamic):Edge
+	@:keep public function addEdge(outNode:String, outPort:String, inNode:String, inPort:String, ?metadata:Dynamic):Edge
 	{
 		outPort = getPortName(outPort);
 		inPort = getPortName(inPort);
@@ -932,7 +938,7 @@ typedef Group =
 				node:inNode,
 				port:inPort
 			},
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		};
 
 		this.edges.push(edge);
@@ -1049,8 +1055,10 @@ typedef Group =
 	 * @param	port2
 	 * @param	metadata
 	 */
-	@:keep public function setEdgeMetadata(node:String, port:String, node2:String, port2:String, metadata:Dynamic):Void
+	@:keep public function setEdgeMetadata(node:String, port:String, node2:String, port2:String, ?metadata:Dynamic):Void
 	{
+		metadata = metadata != null ? metadata : {};
+
 		var edge = getEdge(node, port, node2, port2);
 
 		if (edge == null)
@@ -1112,7 +1120,7 @@ typedef Group =
 	 * @param	metadata
 	 * @return
 	 */
-	@:keep public function addInitial(data:String, node:String, port:String, metadata:Dynamic):Initializer
+	@:keep public function addInitial(data:String, node:String, port:String, ?metadata:Dynamic):Initializer
 	{
 		if (getNode(node) == null)
 		{
@@ -1131,7 +1139,7 @@ typedef Group =
 				node: node,
 				port: port
 			},
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		};
 
 		initializers.push(initializer);
@@ -1143,7 +1151,7 @@ typedef Group =
 		return initializer;
 	}
 
-	@:keep public function addInitialIndex(data:String, node:String, port:String, index:Int, metadata:Dynamic):Initializer
+	@:keep public function addInitialIndex(data:String, node:String, port:String, index:Int, ?metadata:Dynamic):Initializer
 	{
 		if (getNode(node) == null)
 		{
@@ -1163,7 +1171,7 @@ typedef Group =
 				port: port,
 				index: index
 			},
-			metadata: metadata
+			metadata: metadata != null ? metadata : {}
 		};
 
 		initializers.push(initializer);
@@ -1175,7 +1183,7 @@ typedef Group =
 		return initializer;
 	}
 
-	@:keep public function addGraphInitial(data:String, node:String, metadata:Dynamic):Void
+	@:keep public function addGraphInitial(data:String, node:String, ?metadata:Dynamic):Void
 	{
 		var inport = Reflect.field(inports, node);
 
@@ -1184,10 +1192,10 @@ typedef Group =
 			return;
 		}
 
-		addInitial(data, inport.process, inport.port, metadata);
+		addInitial(data, inport.process, inport.port, metadata != null ? metadata : {});
 	}
 
-	@:keep public function addGraphInitialIndex(data:String, node:String, index:Int, metadata:Dynamic):Void
+	@:keep public function addGraphInitialIndex(data:String, node:String, index:Int, ?metadata:Dynamic):Void
 	{
 		var inport = Reflect.field(inports, node);
 
@@ -1196,7 +1204,7 @@ typedef Group =
 			return;
 		}
 
-		addInitialIndex(data, inport.process, inport.port, index, metadata);
+		addInitialIndex(data, inport.process, inport.port, index, metadata != null ? metadata : {});
 	}
 
 	@:keep public function removeInitial(node:String, port:String):Void
@@ -1358,8 +1366,9 @@ typedef Group =
 
 	#end
 
-	@:keep public static function loadJSON(definition:Json, callback:Dynamic->Graph->Void, metadata:Dynamic):Void
+	@:keep public static function loadJSON(definition:Json, callback:Dynamic->Graph->Void, ?metadata:Dynamic):Void
 	{
+		metadata = metadata != null ? metadata : {};
 		var name = definition.properties.get('name');
 		var graph = new Graph(name, {caseSensitive: definition.caseSensitive});
 

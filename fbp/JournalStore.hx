@@ -10,7 +10,7 @@ package fbp;
 		this.lastRevision = 0;
 	}
 
-	@:keep public function putTransaction(revId:Int, entries:Dynamic):Void {
+	@:keep public function putTransaction(revId:Int, entries:Array<Journal.Entry>):Void {
 		if (revId > lastRevision){
 			lastRevision = revId;
 		}
@@ -18,8 +18,8 @@ package fbp;
 		emit('transaction', [revId]);
 	}
 
-	@:keep public function fetchTransaction(revId:Int, ?entries:Dynamic):Dynamic {
-		return {};
+	@:keep public function fetchTransaction(revId:Int, ?entries:Array<Journal.Entry>):Array<Journal.Entry> {
+		return [];
 	}
 
 
