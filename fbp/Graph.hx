@@ -1442,9 +1442,82 @@ typedef Group =
 	
 	
 	@:keep private static function resetGraph(graph:Graph):Void {
-		
+		// Edges and similar first, to have control over the order
+		// If we'd do nodes first, it will implicitly delete edges
+		// Important to make journal transactions invertible
+		var groups = graph.groups.copy();
+		groups.reverse();
+		for(group in groups){
+			if(group != null) {
+				graph.removeGroup(group.name);
+			}
+		}
+
+		for(port in Reflect.fields(graph.outports)) {
+			graph.removeOutport(port);
+		}
+
+		for(port in Reflect.fields(graph.inports)) {
+			graph.removeInport(port);
+		}
+
+		graph.setProperties({});
+
+		var initializers = graph.initializers;
+		initializers.reverse();
+		for(iip in initializers) {
+			graph.removeInitial(iip.to.node, iip.to.port);
+		}
+
+		var edges = graph.edges;
+		edges.reverse();
+		for(edge in edges){
+			graph.removeEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port);
+		}
+
+		var nodes = graph.nodes;
+		nodes.reverse();
+		for(node in nodes){
+			graph.removeNode(node.id);
+		}
 	}
 	
-	//Todo: function mergeResolveTheirsNaive(base, to)
+	/**
+	 * Note: Caller should create transaction
+	 * First removes everything in *base, before building it up to mirror *to
+	 * @param base 
+	 * @param to 
+	 */
+	@:keep public static function mergeResolveTheirsNaive(base:Graph, to:Graph) {
+		resetGraph(base);
+
+		for(node in to.nodes){
+			base.addNode(node.id, node.component, node.metadata);
+		}
+
+		for(edge in to.edges){
+			base.addEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port, edge.metadata);
+		}
+
+		for(iip in to.initializers){
+			base.addInitial(iip.from.data, iip.to.node, iip.to.port, iip.metadata);
+		}
+
+		base.setProperties(to.properties);
+
+		for(pub in Reflect.fields(to.inports)){
+			var priv = Reflect.field(to.inports, pub);
+			base.addInport(pub, priv.process, priv.port, priv.metadata);
+		}
+
+		for(pub in Reflect.fields(to.outports)){
+			var priv = Reflect.field(to.outports, pub);
+			base.addOutport(pub, priv.process, priv.port, priv.metadata);
+		}
+
+		for(group in to.groups){
+			base.addGroup(group.name, group.nodes, group.metadata);
+		}
+	}
 }
 
