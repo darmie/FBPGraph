@@ -302,4 +302,37 @@ typedef Entry = {
 		
 		this.entries.push(entry);
 	}
+
+
+	@:keep public function executeEntry(entry:Entry):Void {
+		var a:Dynamic = entry.args;
+
+		switch entry.cmd {
+			case 'addNode': this.graph.addNode(a.id, a.component);
+			case 'removeNode': this.graph.removeNode(a.id);
+			case 'renameNode': this.graph.renameNode(a.oldId, a.newId);
+			case 'changeNode': this.graph.setNodeMetadata(a.id, a._new);
+			case 'addEdge': this.graph.addEdge(a.from.node, a.from.port, a.to.node, a.to.port);
+			case 'removeEdge': this.graph.removeEdge(a.from.node, a.from.port, a.to.node, a.to.port);
+			case 'changeEdge': this.graph.setEdgeMetadata(a.from.node, a.from.port, a.to.node, a.to.port, calculateMeta(a._old, a._new));
+			case 'addInitial': this.graph.addInitial(a.from.data, a.to.node, a.to.port);
+			case 'removeInitial': this.graph.removeInitial(a.to.node, a.to.port);
+			case 'startTransaction': return;
+			case 'endTransaction': return;
+			case 'changeProperties' : this.graph.setProperties(a._new);
+			case 'addGroup' : this.graph.addGroup(a.name, a.nodes, a.metadata);
+			case 'renameGroup' : this.graph.renameGroup(a.oldName, a.newName);
+			case 'removeGroup' : this.graph.removeGroup(a.name);
+			case 'changeGroup' : this.graph.setGroupMetadata(a.name, calculateMeta(a._old, a._new));
+			case 'addInport' : this.graph.addInport(a.name, a.port.process, a.port.port, a.port.metadata);
+			case 'removeInport' : this.graph.removeInport(a.name);
+			case 'renameInport' : this.graph.renameInport(a.oldId, a.newId);
+			case 'changeInport' : this.graph.setInportMetadata(a.name, calculateMeta(a._old, a._new));
+			case 'addOutport' : this.graph.addOutport(a.name, a.port.process, a.port.port, a.port.metadata a.name);
+			case 'removeOutport' : this.graph.removeOutport(a.name);
+			case 'renameOutport' : this.graph.renameOutport(a.oldId, a.newId);
+			case 'changeOutport' : this.graph.setOutportMetadata(a.name, calculateMeta(a._old, a._new));
+			default: throw 'Unknown journal entry: ${entry.cmd}';										
+		}
+	}
 }
