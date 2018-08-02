@@ -3,7 +3,7 @@
 This library provides a Haxe implementation of Flow-Based Programming graphs. There are two areas covered:
 
 * `Graph` - the actual graph library
-* `Journal` -  journal system for keeping track of graph changes and undo history (Todo)
+* `Journal` -  journal system for keeping track of graph changes and undo history
 
 
 ## Usage
