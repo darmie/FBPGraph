@@ -1,6 +1,7 @@
--cp src
+#-cp src
 -cp test
 
 -lib utest
+-lib FBPGraph
 
 -main Main
