@@ -59,7 +59,7 @@ class Main {
 		var test = new Runner();
 		test.addCase(new GraphSpec());
 		test.addCase(new JournalSpec());
-
+		
 		Report.create(test);
 		test.run();
 	}

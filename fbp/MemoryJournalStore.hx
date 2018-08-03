@@ -1,3 +1,12 @@
+/**
+ * FBP Journal
+ * (c) 2018 Damilare Akinlaja, Nigeria
+ * (c) 2016-2017 Flowhub UG
+ * (c) 2014 Jon Nordby
+ * (c) 2013 Flowhub UG
+ * (c) 2011-2012 Henri Bergius, Nemein
+ * FBP Graph may be freely distributed under the MIT license
+ */
 package fbp;
 
 class MemoryJournalStore extends JournalStore {
