@@ -1,3 +1,5 @@
 -cp test
 
 -lib utest
+
+-main Main
