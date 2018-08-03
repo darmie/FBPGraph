@@ -7,6 +7,11 @@ This library provides a Haxe implementation of Flow-Based Programming graphs. Th
 
 See [this](https://github.com/flowbased/fbp-graph) for more information.
 
+
+## Installation
+
+`$ haxelib git FBPGraph https://github.com/darmie/FBPGraph.git`
+
 ## Usage
 
 ```hx
