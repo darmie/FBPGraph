@@ -5,6 +5,7 @@ This library provides a Haxe implementation of Flow-Based Programming graphs. Th
 * `Graph` - the actual graph library
 * `Journal` -  journal system for keeping track of graph changes and undo history
 
+See [this](https://github.com/flowbased/fbp-graph) for more information.
 
 ## Usage
 
