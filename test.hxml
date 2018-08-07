@@ -1,7 +1,11 @@
 #-cp src
 -cp test
-
+-dce no
 -lib utest
 -lib FBPGraph
 
+-neko bin/test.n
+
 -main Main
+
+-cmd neko ./bin/test.n

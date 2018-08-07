@@ -85,7 +85,8 @@ typedef Node =
 {
 	var id:String;
 	var component:String;
-	var metadata:Dynamic;
+	@:optional var metadata:Dynamic;
+	@:optional var display:Dynamic;
 }
 
 typedef Group =
@@ -261,7 +262,7 @@ typedef Group =
 			metadata: metadata != null ? metadata : {}
 		});
 
-		this.emit('addInport', [publicPort, Reflect.field(this.inports, publicPort));
+		this.emit('addInport', [publicPort, Reflect.field(this.inports, publicPort)]);
 		this.checkTransactionEnd();
 	}
 
@@ -370,7 +371,7 @@ typedef Group =
 			metadata: metadata != null ? metadata : {}
 		});
 
-		this.emit('addOutport', [publicPort, Reflect.field(this.outports, publicPort));
+		this.emit('addOutport', [publicPort, Reflect.field(this.outports, publicPort)]);
 		this.checkTransactionEnd();
 	}
 
@@ -1299,10 +1300,20 @@ typedef Group =
 			json.groups.push(groupData);
 		}
 
+		for(node in this.nodes){
+			json.processes.set(node.id, {
+				component: node.component
+			});
+
+			if(node.metadata != {}){
+				json.processes.get(node.id).metadata = node.metadata;
+			}
+		}
+
 		for (i in 0...edges.length)
 		{
 			var edge = edges[i];
-			var connection:Connection
+			var connection:Connection =
 			{
 				src: {
 					process: edge.from.node,
