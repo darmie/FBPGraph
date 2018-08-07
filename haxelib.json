@@ -4,7 +4,7 @@
 	"license": "MIT",
 	"tags": ["cross","flowbased", "fbp"],
 	"description": "FBP Graph Library for Haxe.",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"classPath": "src",
 	"releasenote": "",
 	"contributors": ["darmie"],
