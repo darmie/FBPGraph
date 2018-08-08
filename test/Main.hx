@@ -169,6 +169,254 @@ class GraphSpec {
 		 g.addEdgeIndex('Foo', 'out', null, 'Bar', 'in', 1);
 	}
 
+
+	private var jsonString = '
+{
+  "caseSensitive": true,
+  "properties": {
+    "name": "Example",
+    "foo": "Baz",
+    "bar": "Foo"
+  },
+  "inports": {
+    "inPut": {
+      "process": "Foo",
+      "port": "inPut",
+      "metadata": {
+        "x": 5,
+        "y": 100
+      }
+    }
+  },
+  "outports": {
+    "outPut": {
+      "process": "Bar",
+      "port": "outPut",
+      "metadata": {
+        "x": 500,
+        "y": 505
+      }
+    }
+  },
+  "groups": [
+    {
+      "name": "first",
+      "nodes": [
+        "Foo"
+      ],
+      "metadata": {
+        "label": "Main"
+      }
+    },
+    {
+      "name": "second",
+      "nodes": [
+        "Foo2",
+        "Bar2"
+      ]
+    }
+  ],
+  "processes": {
+    "Foo": {
+      "component": "Bar",
+      "metadata": {
+        "display": {
+          "x": 100,
+          "y": 200
+        },
+        "routes": [
+          "one",
+          "two"
+        ],
+        "hello": "World"
+      }
+    },
+    "Bar": {
+      "component": "Baz",
+      "metadata": {}
+    },
+    "Foo2": {
+      "component": "foo",
+      "metadata": {}
+    },
+    "Bar2": {
+      "component": "bar",
+      "metadata": {}
+    }
+  },
+  "connections": [
+    {
+      "src": {
+        "process": "Foo",
+        "port": "outPut"
+      },
+      "tgt": {
+        "process": "Bar",
+        "port": "inPut"
+      },
+      "metadata": {
+        "route": "foo",
+        "hello": "World"
+      }
+    },
+    {
+      "src": {
+        "process": "Foo",
+        "port": "out2"
+      },
+      "tgt": {
+        "process": "Bar",
+        "port": "in2",
+        "index": 2
+      },
+      "metadata": {
+        "route": "foo",
+        "hello": "World"
+      }
+    },
+    {
+      "data": "Hello, world!",
+      "tgt": {
+        "process": "Foo",
+        "port": "inPut"
+      }
+    },
+    {
+      "data": "Hello, world, 2!",
+      "tgt": {
+        "process": "Foo",
+        "port": "in2"
+      }
+    },
+    {
+      "data": "Cheers, world!",
+      "tgt": {
+        "process": "Foo",
+        "port": "arr",
+        "index": 0
+      }
+    },
+    {
+      "data": "Cheers, world, 2!",
+      "tgt": {
+        "process": "Foo",
+        "port": "arr",
+        "index": 1
+      }
+    }
+  ]
+}';
+
+	var json:fbp.Graph.Json;
+	public function testShouldProduceAGraph(){
+		json = haxe.Json.parse(jsonString);
+		g = null;
+
+		fbp.Graph.loadJSON(json, (err:Dynamic, instance:fbp.Graph)->{
+			if(err != null){
+				return;
+			}
+
+			g = instance;
+			Assert.is(g, fbp.Graph);
+		});
+
+		var moreTasks = new utest.Dispatcher();
+
+		//should have a name
+		moreTasks.add((e:Dynamic)->{
+			Assert.equals('Example', g.name);
+		});
+
+		//should have graph metadata intact
+		moreTasks.add((e:Dynamic)->{
+			Assert.same({foo:'Baz', bar:'Foo'}, g.properties);
+		});
+
+		// should produce same JSON when serialized
+		moreTasks.add((e:Dynamic)->{
+			Assert.same(json, g.toJSON());
+			Assert.equals(haxe.Json.stringify(json), haxe.Json.stringify(g.toJSON()));
+		});	
+
+		// should allow modifying graph metadata
+		moreTasks.add((e:Dynamic)->{
+			g.once('changeProperties', new fbp.EventCallback((args:Array<Dynamic>)->{
+				var properties:Dynamic = args[0];
+				Assert.same(properties, g.properties);
+				Assert.same(g.properties, {
+					foo: 'Baz',
+					bar: 'Bar',
+					hello: 'World'
+				});
+			}));
+
+			g.setProperties({
+				hello: 'World',
+				bar: 'Bar'
+			});
+		});
+
+		// should contain four nodes
+		moreTasks.add((e:Dynamic)->{
+			Assert.equals(4, g.nodes.length);
+		});
+
+		// the first Node should have its metadata intact
+		moreTasks.add((e:Dynamic)->{
+			var node = g.getNode('Foo');
+
+			Assert.is(node.metadata, Dynamic);
+			Assert.is(node.metadata.display, Dynamic);
+			Assert.equals(100, node.metadata.display.x);
+			Assert.equals(200, node.metadata.display.y);
+			Assert.is(node.metadata.routes, Array);
+			Assert.contains('one', node.metadata.routes);
+			Assert.contains('two', node.metadata.routes);
+		});
+
+		// should allow modifying node metadata
+		moreTasks.add((e:Dynamic)->{
+			g.once('changeNode', new fbp.EventCallback((args:Array<Dynamic>)->{
+				var node:fbp.Graph.Node = args[0];
+				Assert.equals('Foo', node.id);
+				Assert.is(node.metadata.routes, Array);
+				Assert.contains('one', node.metadata.routes);
+				Assert.contains('two', node.metadata.routes);
+				Assert.equals('World', node.metadata.hello);					
+			}));
+
+			g.setNodeMetadata('Foo', {
+				hello: 'World'
+			});
+		});
+
+		// should contain two connections
+		moreTasks.add((e:Dynamic)->{
+			Assert.equals(2, g.edges.length);
+		});
+
+		// the first Edge should have its metadata intact
+		moreTasks.add((e:Dynamic)->{
+			var e = g.edges[0];
+
+			g.once('changeEdge', new fbp.EventCallback((args:Array<Dynamic>)->{
+				var edge:fbp.Graph.Edge = args[0];
+				Assert.equals(e, edge);
+				Assert.equals('foo', edge.metadata.route);
+				Assert.equals('World', edge.metadata.hello);
+			}));
+
+			g.setEdgeMetadata(e.from.node, e.from.port, e.to.node, e.to.port, {hello: 'World'});
+		});
+
+		//Todo: IIPs
+
+		moreTasks.dispatch(null);
+		
+	}
+	
+
 	public function teardown(){
 		//g = null;
 	}

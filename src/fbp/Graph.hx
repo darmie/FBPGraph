@@ -30,7 +30,7 @@ typedef ConnectionProp =
 {
 	var process:String;
 	var port:String;
-	var index:Int;
+	@:optional var index:Int;
 }
 
 typedef Connection =
@@ -51,7 +51,7 @@ typedef EdgeDirection =
 {
 	var node:String;
 	var port:String;
-	@:optional var index:Int;
+	var index:Int;
 }
 
 typedef Edge =
@@ -59,7 +59,7 @@ typedef Edge =
 	var from:EdgeDirection;
 	var to:EdgeDirection;
 	var metadata:Dynamic;
-	@:optional var index:Int;
+	var index:Int;
 }
 
 typedef InitializerTo =
@@ -876,14 +876,15 @@ typedef Group =
 			from: {
 				node:outNode,
 				port:outPort,
-				index:outIndex
+				index: (outIndex != null ? outIndex : null)
 			},
 			to: {
 				node:inNode,
 				port:inPort,
-				index:inIndex
+				index: (inIndex != null ? inIndex : null)
 			},
-			metadata: metadata != null ? metadata : {}
+			metadata: metadata != null ? metadata : {},
+			index: null
 		};
 
 		edges.push(edge);
@@ -933,13 +934,16 @@ typedef Group =
 		var edge:Edge = {
 			from: {
 				node:outNode,
-				port:outPort
+				port:outPort,
+				index: null
 			},
 			to: {
 				node:inNode,
-				port:inPort
+				port:inPort,
+				index: null
 			},
-			metadata: metadata != null ? metadata : {}
+			metadata: metadata != null ? metadata : {},
+			index: null
 		};
 
 		this.edges.push(edge);
@@ -1276,7 +1280,7 @@ typedef Group =
 		{
 			json.inports.set(pub, Reflect.field(inports, pub));
 		}
-
+		
 		for (pub in Reflect.fields(outports))
 		{
 			json.outports.set(pub, Reflect.field(outports, pub));
@@ -1295,7 +1299,11 @@ typedef Group =
 			if (Reflect.fields(group.metadata).length > 0)
 			{
 				groupData.metadata = group.metadata;
+			} else {
+				Reflect.deleteField(groupData, 'metadata');
 			}
+
+			
 
 			json.groups.push(groupData);
 		}
@@ -1309,10 +1317,11 @@ typedef Group =
 				json.processes.get(node.id).metadata = node.metadata;
 			}
 		}
-
+		
 		for (i in 0...edges.length)
 		{
 			var edge = edges[i];
+			
 			var connection:Connection =
 			{
 				src: {
@@ -1328,6 +1337,14 @@ typedef Group =
 				metadata: {}
 			};
 
+			if(connection.src.index == null){
+				Reflect.deleteField(connection.src, 'index');
+			}
+			
+			if(connection.tgt.index == null){
+				Reflect.deleteField(connection.tgt, 'index');
+			}
+			
 			if (Reflect.fields(edge.metadata).length > 0)
 			{
 				connection.metadata = edge.metadata;
@@ -1339,15 +1356,20 @@ typedef Group =
 		for (i in 0...initializers.length)
 		{
 			var initializer:Initializer = initializers[i];
-			json.connections.push(
-			{
+			var ini = {
 				data: initializer.from.data,
 				tgt: {
 					process: initializer.to.node,
 					port: initializer.to.port,
 					index: initializer.to.index
 				}
-			});
+			};
+
+			if(ini.tgt.index == null){
+				Reflect.deleteField(ini.tgt, 'index');
+			}
+
+			json.connections.push(ini);
 		}
 
 		return json;
@@ -1389,7 +1411,7 @@ typedef Group =
 		
 		for(property in definition.properties.keys()) {
 			var value = definition.properties.get(property);
-			if (property ==  'name'){
+			if (property !=  'name'){
 				Reflect.setField(properties, property, value);
 			}
 		}
@@ -1435,7 +1457,7 @@ typedef Group =
 		if(definition.outports != null){
 			for(pub in definition.outports.keys()){
 				var priv = definition.outports.get(pub);
-				graph.addInport(pub, priv.process, graph.getPortName(priv.port), priv.metadata);
+				graph.addOutport(pub, priv.process, graph.getPortName(priv.port), priv.metadata);
 			}
 		}
 		
