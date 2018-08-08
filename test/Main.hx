@@ -40,12 +40,17 @@ class GraphSpec {
 		moreTests.add(shouldHaveNoEdgesInitially);
 		moreTests.add(shouldHaveNoInitializersInitially);
 		moreTests.add(shouldHaveNoExportsInitially);
-		moreTests.add(shouldEmitAnEvent);
+		moreTests.add(shouldEmitAnEventWhenNewNode);
 		moreTests.add(shouldBeInGraphListOfNodes);
 		moreTests.add(shouldBeAccessibleViaGetter);
 		moreTests.add(shouldHaveEmptyMetadata);
 		moreTests.add(shouldBeAvailableInJSONExport);
 		moreTests.add(shouldEmitEventWhenRemoved);
+
+		moreTests.add(shouldEmitAnEventWhenNewEdge);
+		moreTests.add(shouldAddEdge);
+		moreTests.add(shouldRefuseDuplicateEdge);
+		moreTests.add(shouldEmitAnEventWhenNewEdgeWithIndex);
 
 		moreTests.dispatch(null);
 	}
@@ -67,7 +72,7 @@ class GraphSpec {
 		Assert.isTrue(Reflect.fields(g.outports).length == 0);
 	}
 
-	public function shouldEmitAnEvent(e:Dynamic) {
+	public function shouldEmitAnEventWhenNewNode(e:Dynamic) {
 		n = null;
 		
 		g.once('addNode', new fbp.EventCallback((args:Array<Dynamic>)->{
@@ -121,6 +126,48 @@ class GraphSpec {
 		g.removeNode('Foo');
 	}
 
+
+	public function shouldEmitAnEventWhenNewEdge(e:Dynamic) {
+		g.addNode('Foo', 'foo');
+		g.addNode('Bar', 'bar');
+
+		g.once('addEdge', new fbp.EventCallback((args:Array<Dynamic>)->{
+			var edge:fbp.Graph.Edge = args[0];
+
+			Assert.equals('Foo', edge.from.node);
+			Assert.equals('In', edge.to.port);
+		}));
+
+		g.addEdge('Foo', 'Out', 'Bar', 'In');
+	}
+
+	public function shouldAddEdge(e:Dynamic) {
+		g.addEdge('Foo', 'out', 'Bar', 'in2');
+
+		Assert.equals(2, g.edges.length);
+	}
+
+	public function shouldRefuseDuplicateEdge(e:Dynamic) {
+		var edge = g.edges[0];
+
+		g.addEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port);
+
+		Assert.equals(g.edges.length, 2);
+	}
+
+	public function shouldEmitAnEventWhenNewEdgeWithIndex(e:Dynamic) {
+		g.once('addEdge', new fbp.EventCallback((args:Array<Dynamic>)->{
+			var edge:fbp.Graph.Edge = args[0];
+
+			Assert.equals('Foo', edge.from.node);
+			Assert.equals('in', edge.to.port);
+			Assert.equals(1, edge.to.index);
+			Assert.isNull(edge.from.index);
+			Assert.equals(3, g.edges.length);
+		}));
+
+		 g.addEdgeIndex('Foo', 'out', null, 'Bar', 'in', 1);
+	}
 
 	public function teardown(){
 		//g = null;

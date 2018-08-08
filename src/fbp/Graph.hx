@@ -880,7 +880,7 @@ typedef Group =
 			},
 			to: {
 				node:inNode,
-				port:outPort,
+				port:inPort,
 				index:inIndex
 			},
 			metadata: metadata != null ? metadata : {}
