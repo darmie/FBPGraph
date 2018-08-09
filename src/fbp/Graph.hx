@@ -51,7 +51,7 @@ typedef EdgeDirection =
 {
 	var node:String;
 	var port:String;
-	var index:Int;
+	@:optional var index:Int;
 }
 
 typedef Edge =
@@ -59,7 +59,7 @@ typedef Edge =
 	var from:EdgeDirection;
 	var to:EdgeDirection;
 	var metadata:Dynamic;
-	var index:Int;
+	@:optional var index:Int;
 }
 
 typedef InitializerTo =
@@ -135,8 +135,9 @@ typedef Group =
 	 * Graphs are created by simply instantiating the Graph class
 	 * and giving it a name:
 	 *
-	 *
+	 * ```haxe
 	 * var myGraph = new Graph('My very cool graph');
+	 * ```
 	 */
 	public function new(name:String = '', ?options:Dynamic)
 	{
@@ -146,7 +147,7 @@ typedef Group =
 		this.nodes = new Array<Node>();
 
 		this.name = name;
-		if (Reflect.hasField(options, 'caseSensitive') && options.caseSensitive != null)
+		if (options != null && Reflect.hasField(options, 'caseSensitive') && options.caseSensitive != null)
 		{
 			this.caseSensitive = options.caseSensitive;
 		}
@@ -293,7 +294,7 @@ typedef Group =
 		oldPort = getPortName(oldPort);
 		newPort = getPortName(newPort);
 
-		if (Reflect.field(inports, 'oldPort') == null)
+		if (Reflect.field(inports, oldPort) == null)
 		{
 			return;
 		}
@@ -308,7 +309,6 @@ typedef Group =
 		Reflect.setField(inports, newPort, Reflect.field(inports, oldPort));
 
 		Reflect.deleteField(inports, oldPort);
-
 		emit('renameInport', [oldPort, newPort]);
 		checkTransactionEnd();
 	}
@@ -402,7 +402,7 @@ typedef Group =
 		oldPort = getPortName(oldPort);
 		newPort = getPortName(newPort);
 
-		if (Reflect.field(outports, 'oldPort') == null)
+		if (Reflect.field(outports, oldPort) == null)
 		{
 			return;
 		}
@@ -488,19 +488,19 @@ typedef Group =
 	@:keep public function renameGroup(oldName:String, newName:String):Void
 	{
 		checkTransactionStart();
-		for (i in 0...groups.length)
+		for (group in groups)
 		{
-			if (groups[i] == null)
+			if (group == null)
 			{
 				continue;
 			}
 
-			if (groups[i].name == oldName)
+			if (group.name != oldName)
 			{
 				continue;
 			}
 
-			groups[i].name = newName;
+			group.name = newName;
 
 			emit('renameGroup', [oldName, newName]);
 		}
@@ -537,37 +537,39 @@ typedef Group =
 	@:keep public function setGroupMetadata(groupName:String, ?metadata:Dynamic):Void
 	{
 		metadata = metadata != null ? metadata : {};
+
 		checkTransactionStart();
-		for (i in 0...groups.length)
+		for (group in groups)
 		{
 
-			if (groups[i] == null)
+			if (group == null)
 			{
 				continue;
 			}
 
-			if (groups[i].name == groupName)
+			if (group.name != groupName)
 			{
 				continue;
 			}
 
-			var before:Dynamic = Reflect.copy(groups[i].metadata);
+			var before:Dynamic = Reflect.copy(group.metadata);
 
-			for (k in 0...Reflect.fields(metadata).length)
+			for (item in Reflect.fields(metadata))
 			{
-				var item = Reflect.fields(metadata)[k];
+				
 				var val = Reflect.field(metadata, item);
 
 				if (val != null)
 				{
-					Reflect.setField(groups[i].metadata, item, val);
+					Reflect.setField(group.metadata, item, val);
 				}
 				else
 				{
-					Reflect.deleteField(groups[i].metadata, item);
+					Reflect.deleteField(group.metadata, item);
 				}
 			}
-			emit('changeGroup', [groups[i], before, metadata]);
+			
+			emit('changeGroup', [group, before, metadata]);
 		}
 
 		checkTransactionEnd();
@@ -581,7 +583,9 @@ typedef Group =
 	 * possible display coordinates.
 	 *
 	 * For example:
+	 * ```haxe
 	 * 		myGraph.addNode('Read, 'ReadFile', {x:91, y:154});
+	 * ```
 	 *
 	 * Addition of a node will emit the `addNode` event.
 	 *
@@ -629,33 +633,31 @@ typedef Group =
 		for (i in 0...edges.length)
 		{
 			var edge = edges[i];
-			if (edge.from.node == node.id ||  edge.to.node == node.id)
+			if ((edge.from.node == node.id) ||  (edge.to.node == node.id))
 			{
 				toRemove.push(edge);
 			}
 		}
 
-		for (k in 0...toRemove.length)
+		for (edge in toRemove)
 		{
-			var edge = toRemove[k];
 			removeEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port);
 		}
 
 		var toRemove:Array<Initializer> = new Array<Initializer>();
 
-		for (i in 0...initializers.length)
+		for (initializer in initializers)
 		{
-			var initializer = initializers[i];
+			
 			if (initializer.to.node == node.id)
 			{
 				toRemove.push(initializer);
 			}
 		}
 
-		for (k in 0...toRemove.length)
+		for (initializer in toRemove)
 		{
-			var initializer = toRemove[k];
-			removeEdge(initializer.to.node, initializer.to.port);
+			removeInitial(initializer.to.node, initializer.to.port);
 		}
 
 		var toRemove:Array<Dynamic> = new Array<Dynamic>();
@@ -709,8 +711,9 @@ typedef Group =
 	 * Getting a node
 	 *
 	 * Nodes objects can be retrieved from the graph by their ID:
-	 *
+	 * ```haxe
 	 * 		var myNode = myGraph.getNode('Read');
+	 * ```
 	 * @param	id
 	 * @return  Node
 	 */
@@ -876,15 +879,15 @@ typedef Group =
 			from: {
 				node:outNode,
 				port:outPort,
-				index: (outIndex != null ? outIndex : null)
+				index: (outIndex != 0 ? outIndex : 0)
 			},
 			to: {
 				node:inNode,
 				port:inPort,
-				index: (inIndex != null ? inIndex : null)
+				index: (inIndex != 0 ? inIndex : 0)
 			},
 			metadata: metadata != null ? metadata : {},
-			index: null
+			index: 0
 		};
 
 		edges.push(edge);
@@ -899,9 +902,10 @@ typedef Group =
 	 * Connecting nodes
 	 * Nodes can be connected by adding edges between a node's outport
 	 * and another node's inport:
-	 *
+	 * ```haxe
 	 *      myGraph.addEdge('Read', 'out', 'Display', 'in');
 	 *      myGraph.addEdgeIndex('Read', 'out', null, 'Display', 'in', 2);
+	 * ```
 	 *
 	 * Adding an edge will emit the `addEdge` event.
 	 */
@@ -934,16 +938,13 @@ typedef Group =
 		var edge:Edge = {
 			from: {
 				node:outNode,
-				port:outPort,
-				index: null
+				port:outPort
 			},
 			to: {
 				node:inNode,
-				port:inPort,
-				index: null
+				port:inPort
 			},
-			metadata: metadata != null ? metadata : {},
-			index: null
+			metadata: metadata != null ? metadata : {}
 		};
 
 		this.edges.push(edge);
@@ -1017,8 +1018,9 @@ typedef Group =
 	/**
 	 * Getting an edge
 	 * Edge objects can be retrieved from the graph by the node and port IDs:
-	 *
+	 * ```haxe
 	 * 		 var myEdge = myGraph.getEdge('Read', 'out', 'Write', 'in');
+	 * ```
 	 * @param	node
 	 * @param	port
 	 * @param	node2
@@ -1108,15 +1110,17 @@ typedef Group =
 	 * IIPs are especially useful for sending configuration information
 	 * to components at FBP network start-up time. This could include
 	 * filenames to read, or network ports to listen to.
-	 *
+	 * ```haxe
 	 * 		myGraph.addInitial('somefile.txt', 'Read', 'source');
 	 * 		myGraph.addInitialIndex('somefile.txt', 'Read', 'source', 2);
+	 * ```
 	 *
 	 * If inports are defined on the graph, IIPs can be applied calling
 	 * the `addGraphInitial` or `addGraphInitialIndex` methods.
-	 *
+	 * ```haxe
 	 * 		myGraph.addGraphInitial('somefile.txt', 'file');
 	 * 		myGraph.addGraphInitialIndex('somefile.txt', 'file', 2);
+	 * ```
 	 *
 	 * Adding an IIP will emit a `addInitial` event.
 	 * @param	data

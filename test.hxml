@@ -1,12 +1,14 @@
-#-cp src
 -cp test
 -cp src
 -dce no
 -lib utest
 -lib FBPGraph
 
+-D mingw
+
 -neko bin/test.n
 
 -main Main
 
--cmd neko ./bin/test.n
+-cmd neko bin/test.n
+
