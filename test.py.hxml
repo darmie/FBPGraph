@@ -3,14 +3,14 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-python bin/test.py
 
 -main Main
 
--cmd ./cpp/Main
+#not working
+-cmd python bin/test.py
 

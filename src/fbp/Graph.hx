@@ -9,7 +9,7 @@ package fbp;
 
 
 
-#if !js
+#if (!js && !flash)
 	import sys.io.File;
 #end
 
@@ -1264,7 +1264,7 @@ typedef Group =
 	@:keep public function toJSON():Json
 	{
 		var json:Json = {
-			caseSensitive: caseSensitive,
+			caseSensitive: this.caseSensitive,
 			properties: {},
 			inports: {},
 			outports:{},
@@ -1379,7 +1379,7 @@ typedef Group =
 		return json;
 	}
 
-	#if !js
+	#if (!js && !flash)
 	@:keep public function save(file:String, callback:Dynamic->String->Void):Void
 	{
 		var json:String = haxe.Json.stringify(toJSON(), null, '\t');

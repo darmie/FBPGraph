@@ -3,14 +3,13 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-lua bin/test.lua
 
 -main Main
 
--cmd ./cpp/Main
+-cmd lua bin/test.lua
 

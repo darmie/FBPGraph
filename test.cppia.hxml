@@ -3,14 +3,13 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-cppia bin/test.cppia
 
 -main Main
 
--cmd ./cpp/Main
+-cmd haxelib run hxcpp bin/test.cppia
 

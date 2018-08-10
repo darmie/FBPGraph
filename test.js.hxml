@@ -3,14 +3,13 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-js bin/test.js
 
 -main Main
 
--cmd ./cpp/Main
+-cmd node bin/test.js
 

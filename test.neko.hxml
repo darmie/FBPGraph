@@ -3,14 +3,13 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-neko bin/test.n
 
 -main Main
 
--cmd ./cpp/Main
+-cmd neko bin/test.n
 

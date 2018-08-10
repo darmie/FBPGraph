@@ -3,14 +3,13 @@
 #-dce no
 -lib utest
 -lib FBPGraph
--lib hxcpp-debug-server
 
 #-D mingw
 
 
--cpp cpp/
+-java java/
 
 -main Main
 
--cmd ./cpp/Main
+-cmd java -jar java/Main.jar
 
