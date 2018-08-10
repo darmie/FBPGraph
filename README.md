@@ -160,3 +160,5 @@ Sample JSON
 	}
 ```
 
+See [test/Main.hx](https://github.com/darmie/FBPGraph/test/Main.hx) for more usage examples.
+
