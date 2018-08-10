@@ -77,7 +77,7 @@ typedef Entry =
 		case 'addEdge' :  '${a.from.node} ${a.from.port} -> ${a.to.port} ${a.to.node}';
 		case 'removeEdge' :  '${a.from.node} ${a.from.port} -X> ${a.to.port} ${a.to.node}';
 		case 'changeEdge' :  'META ${a.from.node} ${a.from.port} -> ${a.to.port} ${a.to.node}';
-		case 'addInitial' :  ''${a.from.data}' -> ${a.to.port} ${a.to.node}';
+		case 'addInitial' :  '"${a.from.data}" -> ${a.to.port} ${a.to.node}';
 		case 'removeInitial' :  '"${a.from.data}" -X> ${a.to.port} ${a.to.node}';
 		case 'startTransaction' :  '>>> ${entry.rev}: ${a.id}';
 		case 'endTransaction' :  '<<< ${entry.rev}: ${a.id}';
