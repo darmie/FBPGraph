@@ -4,9 +4,9 @@
 	"license": "MIT",
 	"tags": ["cross","flowbased", "fbp"],
 	"description": "FBP Graph Library for Haxe.",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"classPath": "src",
-	"releasenote": "",
+	"releasenote": "Ensure graph works on static targets",
 	"contributors": ["darmie"],
 	"dependencies": {}
   }
