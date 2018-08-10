@@ -1,0 +1,8 @@
+-cp src
+-D doc-gen
+--macro include('fbp')
+--no-output
+
+-xml docs/doc.xml
+
+-cmd haxelib run dox -i docs -o docs
