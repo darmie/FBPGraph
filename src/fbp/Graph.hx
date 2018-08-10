@@ -1341,11 +1341,11 @@ typedef Group =
 				metadata: {}
 			};
 
-			if(connection.src.index == null){
+			if(connection.src.index == null || connection.src.index == 0){
 				Reflect.deleteField(connection.src, 'index');
 			}
 			
-			if(connection.tgt.index == null){
+			if(connection.tgt.index == null || connection.tgt.index == 0){
 				Reflect.deleteField(connection.tgt, 'index');
 			}
 			

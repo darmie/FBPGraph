@@ -336,7 +336,6 @@ class GraphSpec {
 		// should produce same JSON when serialized
 		moreTasks.add((e:Dynamic)->{
 			Assert.same(json, g.toJSON());
-			Assert.equals(haxe.Json.stringify(json), haxe.Json.stringify(g.toJSON()));
 		});	
 
 		// should allow modifying graph metadata
